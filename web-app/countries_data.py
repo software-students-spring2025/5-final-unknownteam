@@ -1,4 +1,4 @@
-[ 
+COUNTRIES = [ 
   {
     "name": "Afghanistan",
     "continent": "Asia",
