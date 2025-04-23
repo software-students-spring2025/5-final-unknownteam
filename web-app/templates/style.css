@@ -1,0 +1,95 @@
+.Categories
+{
+    margin-left: auto;
+    margin-right: auto;
+    display: table;
+}
+.CatContent
+{
+    width: 200px;
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    border-style: solid;
+    border-color: white;
+}
+.triangle-up {
+	width: 0;
+  padding-top:15px;
+  margin-left:10px;
+	height: 0;
+	border-left: 25px solid transparent;
+	border-right: 25px solid transparent;
+	border-bottom: 25px solid #fa9b9b;
+}
+.triangle-down {
+	width: 0;
+  margin-top:15px;
+  margin-left:10px;
+	height: 0px;
+	border-left: 25px solid transparent;
+	border-right: 25px solid transparent;
+	border-top: 25px solid #fa9b9b;
+}
+.rectangleWrong {
+  height: 50px;
+  width: 200px;
+  background-color: #f24b4b;
+  
+}
+.rectangleRight {
+    height: 50px;
+    width: 200px;
+    background-color: #75ec79;
+}
+
+.rectangleBlank {
+    height: 50px;
+    width: 200px;
+    background-color: #b0b0b0;
+}
+
+.boxText
+{
+  height: 40px;
+  margin-bottom: 25px;
+  width: 180px;
+  margin-top: 15px;
+  vertical-align:middle;
+  text-align:right;
+  
+  color: #FFFFFF;
+}
+.over
+{
+  position: absolute;
+}
+
+ul{
+    list-style-type:none; 
+    padding-left: 0;
+}
+
+li + li {
+    margin-top: 50px;
+  }
+
+ul + form{
+    margin-top: 100px;
+}
+input{
+    line-height: 1em;
+    font-size: 1em;
+    padding: 15px;
+    display: flex;
+    margin-left: auto;
+    margin-right: auto;
+    width: 25%;
+    outline: none;
+    background-color: rgb(235, 235, 235);
+    border: none;
+    transition: background-color 0.4s ease-in-out;
+}
+input:focus {
+    background-color: rgb(246, 244, 244);
+  }
