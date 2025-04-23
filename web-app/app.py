@@ -1,6 +1,7 @@
+import datetime
 from flask import (
     Flask,
-    render_template as rt,
+    render_template,
     request,
     redirect,
     url_for,
@@ -9,8 +10,9 @@ from flask import (
 from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
+from countries_data import COUNTRIES
 
-
+START_DATE = datetime.date(2025, 4, 23)
 
 app = Flask(__name__)
 
@@ -29,8 +31,6 @@ def create_app():
     cxn = MongoClient(MONGO_URI)
     db = cxn[MONGO_DBNAME]
 
-    data = db.countries
-
     # testing for mongoDB connection
     try:
         cxn.admin.command("ping")
@@ -38,13 +38,35 @@ def create_app():
     except Exception as e:
         print(" * Error connecting to MongodDB", e)
 
+    c_data = db["countries"]
+    # Add country data to database
+    if c_data.count_documents({}) == 0:
+        c_data.insert_many(COUNTRIES)
+        print("Seeded countries collection.")
+    else:
+        print("Countries collection already populated.")
 
-    @app.route("/game", methods = ["GET", "POST"])
-    def game():
-        if request.method == "POST":
-            guess = request.form["Guess a country!"]
-            if not data["countries"].find_one({"name": guess}):
-                flash("Invalid country.")
+    def get_today_country():
+        countries = list(c_data.find({}))
+        if not countries:
+            return None
+
+        today = datetime.date.today()
+        days_since_start = (today - START_DATE).days
+        index = days_since_start % len(countries)
+        return countries[index]
+    
+    @app.route('/', methods=['GET', 'POST'])
+    def home():
+        guess = ""
+        #country = get_today_country()
+        #print(f"Today's country is: {country['name']}" if country else "No countries available.")
+        if request.method == 'POST':
+            guess = request.form.get('Guess')
+            # You can process the guess here, e.g., check it against correct answers
+            print(f"User guessed: {guess}")
+
+        return render_template('home.html', guess=guess)
     
     return app
 
