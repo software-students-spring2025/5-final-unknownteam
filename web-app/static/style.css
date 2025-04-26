@@ -1,95 +1,151 @@
-.Categories
-{
-    margin-left: auto;
-    margin-right: auto;
-    display: table;
+.guess-section {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  margin-bottom: 20px;
 }
-.CatContent
-{
-    width: 200px;
-    display: table-cell;
-    text-align: center;
-    vertical-align: middle;
-    border-style: solid;
-    border-color: white;
+
+
+#country-guess {
+  width: 300px; 
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px; 
+  border: 2px solid #ccc; 
+  background-color: #f5f5f5;  
+  outline: none;  
+  transition: border-color 0.3s ease; 
+  box-sizing: border-box;
 }
-.triangle-up {
-	width: 0;
-  padding-top:15px;
-  margin-left:10px;
-	height: 0;
-	border-left: 25px solid transparent;
-	border-right: 25px solid transparent;
-	border-bottom: 25px solid #fa9b9b;
+
+#country-guess:focus {
+  border-color: #007BFF; 
 }
-.triangle-down {
-	width: 0;
-  margin-top:15px;
-  margin-left:10px;
-	height: 0px;
-	border-left: 25px solid transparent;
-	border-right: 25px solid transparent;
-	border-top: 25px solid #fa9b9b;
+
+#guess-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: background-color 0.3s ease;
 }
-.rectangleWrong {
-  height: 50px;
-  width: 200px;
-  background-color: #f24b4b;
-  
+
+#guess-button:hover {
+  background-color: #0056b3; 
 }
-.rectangleRight {
-    height: 50px;
-    width: 200px;
-    background-color: #75ec79;
+
+#suggestions-box {
+  position: absolute;
+  top: 100%;
+  left: -3;
+  width: 20%;  
+  max-width: 20%; 
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  z-index: 10;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: calc(2 * 40px);
+  overflow-y: auto;
+  padding: 0;
+  box-sizing: border-box; 
 }
+
+.suggestion-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background-color: #f0f0f0;
+}
+
+
+.Categories {
+  display: flex;
+  justify-content: center;
+  gap: 8px; 
+  margin-bottom: 8px; 
+}
+
+.CatContent {
+  width: 100px; 
+  text-align: center;
+  font-size: 14px;
+}
+
 
 .rectangleBlank {
-    height: 50px;
-    width: 200px;
-    background-color: #b0b0b0;
+  background-color: #f0f0f0;
 }
 
-.boxText
-{
-  height: 40px;
-  margin-bottom: 25px;
-  width: 180px;
-  margin-top: 15px;
-  vertical-align:middle;
-  text-align:right;
-  
-  color: #FFFFFF;
-}
-.over
-{
-  position: absolute;
+.rectangleRight {
+  background-color: #4CAF50; 
 }
 
-ul{
-    list-style-type:none; 
-    padding-left: 0;
+.rectangleWrong {
+  background-color: #f44336; 
+}
+
+
+.rectangleBlank, .rectangleRight, .rectangleWrong {
+  width: 95px; 
+  height: 40px; 
+  margin: 2px; 
+  border: none; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  border-radius: 6px; 
+}
+
+ul {
+  list-style-type: none;
+  padding-left: 0;
 }
 
 li + li {
-    margin-top: 50px;
-  }
+  margin-top: 20px;
+}
 
-ul + form{
-    margin-top: 100px;
+ul + form {
+  margin-top: 100px;
 }
-input{
-    line-height: 1em;
-    font-size: 1em;
-    padding: 15px;
-    display: flex;
-    margin-left: auto;
-    margin-right: auto;
-    width: 25%;
-    outline: none;
-    background-color: rgb(235, 235, 235);
-    border: none;
-    transition: background-color 0.4s ease-in-out;
+
+.boxText {
+  font-size: 12px;
+  font-weight: normal;
+  text-align: center;
+  padding: 5px;
 }
-input:focus {
-    background-color: rgb(246, 244, 244);
-  }
+
+.arrowInside {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.triangle-up {
+  width: 0;
+  height: 0;
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-bottom: 18px solid white;
+  margin-top: 5px;
+}
+
+.triangle-down {
+  width: 0;
+  height: 0;
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-top: 18px solid white;
+  margin-top: 5px;
+}

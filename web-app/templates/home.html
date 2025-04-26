@@ -1,152 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        async function submitGuess() {
+            const guessData = [];
+            const input = document.getElementById('country-guess').value; // Get the single guess
+
+            if (input.trim() === "") {
+                alert("Please enter a country name.");
+                return;
+            }
+
+            guessData.push(input);
+
+            const response = await fetch('/guess', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    guesses: guessData
+                })
+            });
+
+            const result = await response.json();
+            updateBoard(result.feedback, result.row);
+
+            if (result.game_over) {
+                alert(result.message);
+                document.getElementById('guess-button').disabled = true;
+            }
+        }
+
+        function updateBoard(feedback, row) {
+            feedback.forEach((field, idx) => {
+                const cell = document.getElementById('cell-' + idx + '-' + row);
+                cell.innerHTML = '';  // Clear whatever was inside (input)
+                cell.className = field.status + " boxText"; // Set rectangle class + text class
+                const text = document.createElement('h3');
+                text.className = 'boxText';
+                text.innerText = field.value;
+                cell.appendChild(text);
+
+                if (field.arrow) {
+                    const arrow = document.createElement('div');
+                    arrow.className = field.arrow;
+                    cell.appendChild(arrow);
+                }
+            });
+        }
+    </script>  
+    <script>
+        let suggestionsBox;
+    
+        async function fetchSuggestions() {
+            const input = document.getElementById('country-guess').value.trim();
+            if (input.length === 0) {
+                suggestionsBox.innerHTML = '';
+                return;
+            }
+    
+            const response = await fetch('/autocomplete?q=' + encodeURIComponent(input));
+            const suggestions = await response.json();
+    
+            suggestionsBox.innerHTML = '';
+    
+            suggestions.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.innerText = name;
+                item.onclick = () => {
+                    document.getElementById('country-guess').value = name;
+                    suggestionsBox.innerHTML = '';
+                };
+                suggestionsBox.appendChild(item);
+            });
+        }
+    
+        window.onload = function() {
+            suggestionsBox = document.createElement('div');
+            suggestionsBox.id = 'suggestions-box';
+            document.querySelector('.guess-section').appendChild(suggestionsBox);
+    
+            const input = document.getElementById('country-guess');
+            input.addEventListener('input', fetchSuggestions);
+        };
+    </script>
+      
 </head>
-
-
 <body>
-    <header>
-    </header>
-    <div class = "Categories" style = "border-bottom: 2px solid rgb(0, 0, 0);">
-        <h3 class = "CatContent">
-            Country
-        </h3>
-        <h3 class = "CatContent">
-            Population
-        </h3>
-        <h3 class = "CatContent">
-            Area (km<sup>2</sup>)
-        </h3>
-        <h3 class = "CatContent">
-            GDP
-        </h3>
-        <h3 class = "CatContent">
-            Language
-        </h3>
+    <header></header>
+    <div class="guess-section">
+        <input type="text" id="country-guess" class="guess-input" placeholder="Enter country guess">
+        <button id="guess-button" onclick="submitGuess()">Guess</button>
     </div>
-    <ul>
-        <li class = "Categories">
-            <div class ="CatContent">
-                <div class="rectangleWrong over"></div>
-                <h3 class="boxText over">A Country</h3>
+    <div class="Categories" style="border-bottom: 2px solid black;">
+        <h3 class="CatContent">Country</h3>
+        <h3 class="CatContent">Continent</h3> <!-- New Continent category -->
+        <h3 class="CatContent">Population</h3>
+        <h3 class="CatContent">Area (km<sup>2</sup>)</h3>
+        <h3 class="CatContent">GDP</h3>
+        <h3 class="CatContent">Language</h3>
+        <h3 class="CatContent">Landlocked</h3>
+    </div>
+
+    <ul id="guess-board">
+        {% for row in range(6) %}
+        <li class="Categories">
+            {% for col in range(7) %}  <!-- Adjusted for 6 columns -->
+            <div class="CatContent">
+                {% if row == 0 %}
+                <div id="cell-{{ col }}-{{ row }}" class="rectangleBlank boxText"></div>
+                {% else %}
+                <div id="cell-{{ col }}-{{ row }}" class="rectangleBlank boxText"></div>
+                {% endif %}
             </div>
-            <div class ="CatContent">
-                <div class="rectangleWrong over"></div>
-                <div class="triangle-down over"></div>
-                <h3 class="boxText over">1.31 Billion</h3>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleWrong over"></div>
-                <div class="triangle-up over"></div>
-                <h3 class="boxText over">300,000</h3>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleRight over"></div>
-                <h3 class="boxText over">100.21 Million</h3>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleWrong over"></div>
-                <h3 class="boxText over"> ExLang</h3>
-            </div>
+            {% endfor %}
         </li>
-        <li class = "Categories">
-            <div class ="CatContent">
-                <div class="rectangleWrong over"></div>
-                <h3 class="boxText over">B Country</h3>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleWrong over"></div>
-                <div class="triangle-down over"></div>
-                <h3 class="boxText over">3,460,000</h3>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleWrong over"></div>
-                <div class="triangle-up over"></div>
-                <h3 class="boxText over">700</h3>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleRight over"></div>
-                <h3 class="boxText over">3,000</h3>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleWrong over"></div>
-                <h3 class="boxText over"> ExLang</h3>
-            </div>
-        </li>
-        <li class = "Categories">
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-        </li>
-        <li class = "Categories">
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-        </li>
-        <li class = "Categories">
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-        </li>
-        <li class = "Categories">
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-            <div class ="CatContent">
-                <div class="rectangleBlank over"></div>
-            </div>
-        </li>
-    </ul> 
-    <form>
-        <input type="text" id="Guess" name="Guess">
-    </form>
+        {% endfor %}
+    </ul>
 </body>
+</html>
