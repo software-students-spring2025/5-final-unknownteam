@@ -7,10 +7,10 @@
 Our project is a Wordle-esque game where players guess a randomly determined country. Unlike Wordle, however, instead of getting hints about the letters in the name of the country, we give hints on various traits, such as its landmass, GDP, and geographical location.
 
 # Instructions to run program
-After cloning the respository:
-pip install pipenv
-pipenv install
-python3 web-app/app.py
+After cloning the respository: <br>
+>pip install pipenv <br>
+> pipenv install <br>
+> python3 web-app/app.py <br>
 
 # Instructions to set up environment variables
 Set up the .env file with the correct MONGO_URI and MONGO_DBNAME to access a mongodb in the root directory of the repository. The database does not need to be populated with starter data.
