@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script>
+        const gameMode = "{{ mode }}"
+
         async function submitGuess() {
             const guessData = [];
-            const input = document.getElementById('country-guess').value; // Get the single guess
+            const input = document.getElementById('country-guess').value;
 
             if (input.trim() === "") {
                 alert("Please enter a country name.");
@@ -27,19 +29,26 @@
             });
 
             const result = await response.json();
+            const currentRow = sessionStorage.getItem('practice_row');
             updateBoard(result.feedback, result.row);
+            sessionStorage.setItem('practice_row', parseInt(currentRow) + 1);
 
             if (result.game_over) {
-                alert(result.message);
+                if (result.message.includes("You Win")) {
+                    showWinModal();  // Show win modal
+                } else if (result.message.includes("You Lose")) {
+                    showLossModal(result.target.name);  // Show loss modal with country name
+                }
                 document.getElementById('guess-button').disabled = true;
             }
         }
 
+
         function updateBoard(feedback, row) {
             feedback.forEach((field, idx) => {
                 const cell = document.getElementById('cell-' + idx + '-' + row);
-                cell.innerHTML = '';  // Clear whatever was inside (input)
-                cell.className = field.status + " boxText"; // Set rectangle class + text class
+                cell.innerHTML = '';  
+                cell.className = field.status + " boxText"; 
                 const text = document.createElement('h3');
                 text.className = 'boxText';
                 text.innerText = field.value;
@@ -53,6 +62,79 @@
             });
         }
     </script>  
+    <script>
+        document.getElementById('back-to-selection').addEventListener('click', function() {
+            // Reset session storage when going back to selection
+            sessionStorage.setItem('practice_row', 0);
+            sessionStorage.setItem('practice_guesses', JSON.stringify([]));
+
+            // Optionally, reset the game board visually
+            resetGameBoard();
+            window.location.reload();
+        });
+        window.onload = function() {
+            // Debugging: Log session data on page load
+            console.log("Session data before reset:", sessionStorage);
+
+            // Reset session data to initial state
+            sessionStorage.setItem('practice_row', 0);  // Reset row to the first row
+            sessionStorage.setItem('practice_guesses', JSON.stringify([]));  // Clear any previous guesses
+
+            // Reset the board visually
+            resetGameBoard();
+
+            // Log session data after reset
+            console.log("Session data after reset:", sessionStorage);
+
+            // Ensure that we are starting at the first row
+            startAtFirstRow();
+        };
+
+        // Reset the game board visually (clear all cells)
+        function resetGameBoard() {
+            const boardCells = document.querySelectorAll('.rectangleBlank');
+            boardCells.forEach(cell => {
+                cell.innerHTML = '';  // Clear the content of all cells
+                cell.className = "rectangleBlank boxText";  // Ensure the class is reset
+            });
+        }
+
+        // Ensure that the first row is set as the starting point
+        function startAtFirstRow() {
+            const firstRow = sessionStorage.getItem('practice_row');
+            if (firstRow !== '0') {
+                sessionStorage.setItem('practice_row', 0);  // Force start at the first row
+            }
+        }
+
+    </script>
+    <script>
+        document.getElementById('generate-new-country').addEventListener('click', async () => {
+            try {
+                // Get the existing filters from the server session (we'll need to store them!)
+                const filtersResponse = await fetch('/get_practice_filters');
+                const filters = await filtersResponse.json();
+        
+                // Call start_practice with the saved filters
+                const startPracticeResponse = await fetch('/start_practice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(filters)
+                });
+        
+                if (startPracticeResponse.ok) {
+                    // If success, redirect to practice game
+                    window.location.href = '/practice_game';
+                } else {
+                    const errorData = await startPracticeResponse.json();
+                    alert(errorData.error || 'Error starting new practice game');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Something went wrong. Try again.');
+            }
+        });
+    </script>
     <script>
         let suggestionsBox;
     
@@ -89,20 +171,65 @@
             input.addEventListener('input', fetchSuggestions);
         };
     </script>
-      
+    <script>
+        function showWinModal() {
+            const modal = document.getElementById('win-modal');
+            modal.style.display = 'block';  // Show the modal
+        }
+
+        function showLossModal(targetName) {
+            const modal = document.getElementById('lose-modal');
+            const message = document.getElementById('lose-message');
+            message.innerText = `You Lose! The country was ${targetName}.`;
+            modal.style.display = 'block';  // Show the modal
+        }
+
+        function closeModal() {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => modal.style.display = 'none');
+        }
+    </script>
+  
+    
 </head>
 <body>
-    <header></header>
+    <header class="header">
+        <h1 class="title">Country Guesser</h1>
+        <div class="header-buttons">
+            <button onclick="location.href='{{ url_for('home') }}'" class="header-button">Daily Country</button>
+            <button onclick="location.href='{{ url_for('practice') }}'" class="header-button">Practice</button>
+        </div>
+    </header>
+
     <div class="guess-section">
         <input type="text" id="country-guess" class="guess-input" placeholder="Enter country guess">
         <button id="guess-button" onclick="submitGuess()">Guess</button>
     </div>
+
+    <div id="win-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>Congratulations!</h2>
+            <p>You have successfully guessed the country!</p>
+            <button onclick="closeModal()" class="action-button">Close</button>
+        </div>
+    </div>
+    <div id="lose-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>Game Over!</h2>
+            <p id="lose-message"></p>
+            <button onclick="closeModal()" class="action-button">Close</button>
+        </div>
+    </div>    
+    
+
     <div class="Categories" style="border-bottom: 2px solid black;">
         <h3 class="CatContent">Country</h3>
-        <h3 class="CatContent">Continent</h3> <!-- New Continent category -->
+        <h3 class="CatContent">Continent</h3> 
         <h3 class="CatContent">Population</h3>
         <h3 class="CatContent">Area (km<sup>2</sup>)</h3>
-        <h3 class="CatContent">GDP</h3>
+        <h3 class="CatContent">GDP (per capita)</h3>
         <h3 class="CatContent">Language</h3>
         <h3 class="CatContent">Landlocked</h3>
     </div>
@@ -110,17 +237,19 @@
     <ul id="guess-board">
         {% for row in range(6) %}
         <li class="Categories">
-            {% for col in range(7) %}  <!-- Adjusted for 6 columns -->
+            {% for col in range(7) %} 
             <div class="CatContent">
-                {% if row == 0 %}
                 <div id="cell-{{ col }}-{{ row }}" class="rectangleBlank boxText"></div>
-                {% else %}
-                <div id="cell-{{ col }}-{{ row }}" class="rectangleBlank boxText"></div>
-                {% endif %}
             </div>
             {% endfor %}
         </li>
         {% endfor %}
     </ul>
+    {% if mode == 'practice' %}
+    <div id="bottom-buttons" class="button-container">
+        <button id="generate-new-country" class="action-button" onclick="window.location.reload()">Generate New Country</button>
+        <button id="back-to-selection" class="action-button" onclick="window.location.href='/practice'">Back to Custom Selection</button>
+    </div>
+    {% endif %}
 </body>
 </html>
