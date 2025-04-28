@@ -33,4 +33,4 @@ jobs:
       - name: Run pytest on all tests
         run: |
           pipenv install pytest
-          pipenv run pytest tests/test_app.py
+          pipenv run pytest tests/test_web_app.py
