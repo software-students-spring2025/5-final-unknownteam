@@ -249,6 +249,12 @@
         <div class="header-buttons">
             <button onclick="location.href='{{ url_for('home') }}'" class="header-button">Daily Country</button>
             <button onclick="location.href='{{ url_for('practice') }}'" class="header-button">Practice</button>
+            {% if login == False%}
+            <button onclick="location.href='{{ url_for('login') }}'" class="header-button">Login</button>
+            {% endif %}
+            {%if login == True%}
+            <button onclick="location.href='{{ url_for('logout') }}'" class="header-button">Log Out</button>
+            {% endif %}
         </div>
     </header>
 
