@@ -1,9 +1,9 @@
 services:
   # Web App Service
   web-app:
-    build: ./web-app  # Build the Docker image from the Dockerfile in the web-app directory
+    build: ./web_app  # Build the Docker image from the Dockerfile in the web-app directory
     ports:
-      - "5000:5000"  # Expose web app on port 5000 of the host machine
+      - "8080:8080"  # Expose web app on port 8080 of the host machine
     depends_on:
       - mongodb
     networks:
