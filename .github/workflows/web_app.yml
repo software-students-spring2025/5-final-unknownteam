@@ -17,8 +17,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10"]
-    env:
-      ENVIRONMENT: secrets
+
     steps:
       - uses: actions/checkout@v4
 
