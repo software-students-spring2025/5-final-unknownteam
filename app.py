@@ -74,6 +74,7 @@ def create_app():
         session['practice_guesses'] = []
         session['practice_target'] = None 
         session['practice_filters'] = {}
+        session['guessed_countries'] = []
         #print(session)
         return render_template('practice.html')
 
@@ -89,23 +90,25 @@ def create_app():
         filters = request.get_json()
         session['practice_filters'] = filters
         query = {}
+        session['hint_enabled'] = filters.get('hints', False) if filters else False
+        #print(filters)
+        
+        # Building conditions
+        and_conditions = []
 
         if not filters or not any(filters.values()):
-            #print("No filters selected, choosing a random country.")
+            # No filters selected, choosing a random country.
             matching_countries = list(c_data.find())
         else:
             if 'continent' in filters:
-                query['continent'] = {'$in': filters['continent']}
-                #print(f"Continent filter applied: {filters['continent']}")
-
-            if 'landlocked' in filters:
-                landlocked_vals = []
-                if 'yes' in filters['landlocked']:
-                    landlocked_vals.append(True)
-                if 'no' in filters['landlocked']:
-                    landlocked_vals.append(False)
-                query['landlocked'] = {'$in': landlocked_vals}
-
+                continents = filters['continent']
+                if len(continents) == 1:
+                    # Single continent selected
+                    query['continent'] = continents[0]
+                elif len(continents) > 1:
+                    # Multiple continents selected, use "$or" to match any continent
+                    or_condition = [{'continent': c} for c in continents]
+                    and_conditions.append({'$or': or_condition})
             if 'population' in filters:
                 pop_conditions = []
                 for size in filters['population']:
@@ -116,7 +119,7 @@ def create_app():
                     elif size == 'large':
                         pop_conditions.append({'population': {'$gt': 100_000_000}})
                 if pop_conditions:
-                    query['$or'] = pop_conditions
+                    and_conditions.append({'$or': pop_conditions})
 
             if 'area_size' in filters:
                 area_conditions = []
@@ -128,18 +131,17 @@ def create_app():
                     elif size == 'large':
                         area_conditions.append({'area_km2': {'$gt': 1_000_000}})
                 if area_conditions:
-                    query['$or'] = area_conditions
+                    and_conditions.append({'$or': area_conditions})
+            
+            if and_conditions:
+                query['$and'] = and_conditions
 
             matching_countries = list(c_data.find(query))
             matching_countries = [dict(t) for t in {tuple(d.items()) for d in matching_countries}]
-            #print(f"Filtered countries: {matching_countries}")
-
             if not matching_countries:
                 return jsonify({'error': 'No matching countries found.'}), 400
 
         chosen_country = random.choice(matching_countries)
-        #print(f"Selected country: {chosen_country['name']}")
-
         chosen_country['_id'] = str(chosen_country['_id'])
         session['practice_target'] = {
             'name': chosen_country['name'],
@@ -153,6 +155,7 @@ def create_app():
         session['mode'] = 'practice'
         session['practice_row'] = 0
         session['practice_guesses'] = []
+        session['guessed_countries'] = []
 
         return jsonify({'message': 'Practice game started'})
 
@@ -160,28 +163,27 @@ def create_app():
     @app.route('/practice_game')
     def practice_game():
         session['row'] = 0
+        query = {}
+        session['guessed_countries'] = []
 
         if session.get('mode') != 'practice':
             return "Please start a practice game first.", 400
 
         filters = session.get('practice_filters')
+        #print(filters)
         
+        and_conditions = []
+
         if not filters or not any(filters.values()):
-            #print("No filters found, choosing a random country.")
             matching_countries = list(c_data.find())
         else:
-            query = {}
-
             if 'continent' in filters:
-                query['continent'] = {'$in': filters['continent']}
-
-            if 'landlocked' in filters:
-                landlocked_vals = []
-                if 'yes' in filters['landlocked']:
-                    landlocked_vals.append(True)
-                if 'no' in filters['landlocked']:
-                    landlocked_vals.append(False)
-                query['landlocked'] = {'$in': landlocked_vals}
+                continents = filters['continent']
+                if len(continents) == 1:
+                    query['continent'] = continents[0]
+                elif len(continents) > 1:
+                    or_condition = [{'continent': c} for c in continents]
+                    and_conditions.append({'$or': or_condition})
 
             if 'population' in filters:
                 pop_conditions = []
@@ -193,7 +195,7 @@ def create_app():
                     elif size == 'large':
                         pop_conditions.append({'population': {'$gt': 100_000_000}})
                 if pop_conditions:
-                    query['$or'] = pop_conditions
+                    and_conditions.append({'$or': pop_conditions})
 
             if 'area_size' in filters:
                 area_conditions = []
@@ -205,7 +207,10 @@ def create_app():
                     elif size == 'large':
                         area_conditions.append({'area_km2': {'$gt': 1_000_000}})
                 if area_conditions:
-                    query['$or'] = area_conditions
+                    and_conditions.append({'$or': area_conditions})
+
+            if and_conditions:
+                query['$and'] = and_conditions
 
             matching_countries = list(c_data.find(query))
             matching_countries = [dict(t) for t in {tuple(d.items()) for d in matching_countries}]
@@ -227,7 +232,7 @@ def create_app():
 
         session['practice_guesses'] = []
 
-        return render_template('home.html', mode='practice', target=session.get('practice_target'))
+        return render_template('home.html', mode='practice', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False))
 
     @app.route('/practice_guess', methods=['POST'])
     def practice_guess():
@@ -327,6 +332,11 @@ def create_app():
         if not guessed_country:
             return jsonify({'error': 'Country not found'}), 400
 
+        guessed_countries = session.get('guessed_countries', [])
+        if guessed_country['name'] not in guessed_countries:
+            guessed_countries.append(guessed_country['name'])
+            session['guessed_countries'] = guessed_countries
+
         fields = ['name', 'continent', 'population', 'area_km2', 'gdp_per_capita_usd', 'languages', 'landlocked']
         feedback = []
 
@@ -382,6 +392,93 @@ def create_app():
             'target': target
         })
     
+    @app.route('/get_possible_countries', methods=['GET'])
+    def get_possible_countries():
+        filters = session.get('practice_filters', {})
+        guessed_countries = session.get('guessed_countries', [])
+        practice_target = session.get('practice_target', {})
+
+        query = {}
+        and_conditions = []
+
+        non_numeric_fields = ['continent', 'languages', 'landlocked']
+        numeric_fields = ['population', 'area_km2', 'gdp_per_capita_usd']
+
+        if guessed_countries:
+            for guessed_country_name in guessed_countries:
+                guessed_country = c_data.find_one({'name': {'$regex': f'^{guessed_country_name}$', '$options': 'i'}})
+                if guessed_country:
+                    for field in non_numeric_fields:
+                        if field in guessed_country and field in practice_target:
+                            guessed_value = guessed_country[field]
+                            target_value = practice_target[field]
+
+                            if guessed_value == target_value:
+                                and_conditions.append({field: guessed_value})
+                            else:
+                                and_conditions.append({field: {'$ne': guessed_value}})
+
+                    for field in numeric_fields:
+                        if field in guessed_country and field in practice_target:
+                            guessed_value = guessed_country[field]
+                            target_value = practice_target[field]
+
+                            if guessed_value > target_value:
+                                and_conditions.append({field: {'$lt': guessed_value}})
+                            elif guessed_value < target_value:
+                                and_conditions.append({field: {'$gt': guessed_value}})
+
+            if guessed_countries:
+                and_conditions.append({'name': {'$nin': guessed_countries}})
+
+        # Area size
+        if 'area_size' in filters:
+            area_conditions = []
+            for size in filters['area_size']:
+                if size == 'small':
+                    area_conditions.append({'area_km2': {'$lt': 50_000}})
+                elif size == 'medium':
+                    area_conditions.append({'area_km2': {'$gte': 50_000, '$lte': 1_000_000}})
+                elif size == 'large':
+                    area_conditions.append({'area_km2': {'$gt': 1_000_000}})
+            if area_conditions:
+                and_conditions.append({'$or': area_conditions})
+
+        # Population filter handling
+        if 'population' in filters:
+            pop_conditions = []
+            for size in filters['population']:
+                if size == 'small':
+                    pop_conditions.append({'population': {'$lt': 10_000_000}})
+                elif size == 'medium':
+                    pop_conditions.append({'population': {'$gte': 10_000_000, '$lte': 100_000_000}})
+                elif size == 'large':
+                    pop_conditions.append({'population': {'$gt': 100_000_000}})
+            if pop_conditions:
+                and_conditions.append({'$or': pop_conditions})
+
+        # Continent filters
+        if 'continent' in filters:
+            continents = filters['continent']
+            if len(continents) == 1:
+                and_conditions.append({'continent': continents[0]})
+            elif len(continents) > 1:
+                or_condition = [{'continent': c} for c in continents]
+                and_conditions.append({'$or': or_condition})
+
+        if and_conditions:
+            query = {'$and': and_conditions}
+        else:
+            query = {}
+        #print(query)
+        possible_countries = list(c_data.find(query))
+
+        for country in possible_countries:
+            country['_id'] = str(country['_id'])
+
+        return jsonify({'countries': possible_countries})
+
+
     @app.route('/autocomplete', methods=['GET'])
     def autocomplete():
         query = request.args.get('q', '').strip()

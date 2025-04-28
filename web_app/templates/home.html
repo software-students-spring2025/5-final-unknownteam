@@ -172,6 +172,27 @@
         };
     </script>
     <script>
+        function showHint() {
+            // Fetch possible countries based on guesses and filters
+            fetch('/get_possible_countries')
+                .then(response => response.json())
+                .then(data => {
+                    // Populate the list of possible countries in the modal
+                    const listElement = document.getElementById('possible-countries-list');
+                    listElement.innerHTML = ''; // Clear the list first
+
+                    data.countries.forEach(country => {
+                        const li = document.createElement('li');
+                        li.textContent = country.name;
+                        listElement.appendChild(li);
+                    });
+
+                    // Show the modal
+                    document.getElementById('hint-modal').style.display = 'block';
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
         function showWinModal() {
             const modal = document.getElementById('win-modal');
             modal.style.display = 'block';  // Show the modal
@@ -185,10 +206,40 @@
         }
 
         function closeModal() {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => modal.style.display = 'none');
+            const modal = document.querySelector('.modal[style*="display: block"]'); // Find the modal that is currently visible
+            if (modal) {
+                modal.style.display = 'none';  // Hide the modal
+            }
         }
-    </script>
+
+        function openHintModal(countries) {
+            // Get the modal and list container
+            const modal = document.getElementById("hint-modal");
+            const listContainer = document.getElementById("possible-countries-list");
+
+            // Clear any previous content
+            listContainer.innerHTML = '';
+
+            // Add each country to the list
+            countries.forEach(country => {
+                const listItem = document.createElement('li');
+                
+                // Example of adding country name and other data
+                listItem.innerHTML = `<strong>${country.name}</strong><br>${country.population} people`;
+                
+                listContainer.appendChild(listItem);
+            });
+
+            // Show the modal
+            modal.style.display = "block";
+        }
+        window.onclick = function(event) {
+            const modal = document.getElementById('hint-modal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+        </script>
   
     
 </head>
@@ -202,7 +253,7 @@
     </header>
 
     <div class="guess-section">
-        <input type="text" id="country-guess" class="guess-input" placeholder="Enter country guess">
+        <input type="text" id="country-guess" class="guess-input" placeholder="Enter country guess" autocomplete="off">
         <button id="guess-button" onclick="submitGuess()">Guess</button>
     </div>
 
@@ -249,7 +300,21 @@
     <div id="bottom-buttons" class="button-container">
         <button id="generate-new-country" class="action-button" onclick="window.location.reload()">Generate New Country</button>
         <button id="back-to-selection" class="action-button" onclick="window.location.href='/practice'">Back to Custom Selection</button>
+        {% if hint_enabled %}
+        <button id="show-hint" onclick="showHint()">Show Hint</button>
+        {% endif %}
+    
     </div>
+    <div id="hint-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Possible Countries</h2>
+            <ul id="possible-countries-list">
+                <!-- List of possible countries will be dynamically inserted here -->
+            </ul>
+        </div>
+    </div>
+    
     {% endif %}
 </body>
 </html>
