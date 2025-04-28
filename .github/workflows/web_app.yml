@@ -2,18 +2,14 @@ name: Web App CI
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     services:
       mongo:
         image: mongo:latest
@@ -21,26 +17,23 @@ jobs:
           - 27017:27017
 
     env:
-      MONGO_URI:    'mongodb://localhost:27017'
-      MONGO_DBNAME: 'country_wordle'
-
-    timeout-minutes: 5
-    strategy:
-      matrix:
-        python-version: ["3.10"]
+      MONGO_URI: mongodb://localhost:27017
+      MONGO_DBNAME: country_wordle
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Python, pipenv and root Pipfile deps
-        uses: kojoru/prepare-pipenv@v1
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
 
-      - name: Install local dependencies
+      - name: Install dependencies
         run: |
-          pipenv install --dev
+          python -m pip install --upgrade pip
+          pip install -r web_app/requirements.txt
+          pip install requests
 
-      - name: Run pytest on all tests
+      - name: Run tests
         run: |
-          pipenv run pytest tests/test_web_app.py
+          python -m pytest tests/test_web_app.py --maxfail=5 --disable-warnings -q
