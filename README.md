@@ -7,10 +7,16 @@
 Our project is a Wordle-esque game where players guess a randomly determined country. Unlike Wordle, however, instead of getting hints about the letters in the name of the country, we give hints on various traits, such as its landmass, GDP, and geographical location.
 
 # Instructions to run program
-After cloning the respository: <br>
->pip install pipenv <br>
-> pipenv install <br>
-> python3 web-app/app.py <br>
+After cloning the respository, run Docker engine and use: <br>
+> docker compose up <br>
+
+in the command line to run the project. This should launch the webpage locally at http://127.0.0.1:8080.
 
 # Instructions to set up environment variables
 Set up the .env file with the correct MONGO_URI and MONGO_DBNAME to access a mongodb in the root directory of the repository. The database does not need to be populated with starter data.
+
+## Container Images
+[Web App](https://hub.docker.com/r/mlkelly/5-final-unknownteam-web-app)
+
+# Deployment link
+[Play our game!](https://wordle-app-b7yeu.ondigitalocean.app/)
