@@ -10,10 +10,11 @@ import requests
 
 START_DATE = datetime.date(2025, 4, 23)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="web_app/templates", static_folder="web_app/static")
 
 def create_app():
-    app = Flask(__name__)
+    
+    app = Flask(__name__, template_folder="web_app/templates", static_folder="web_app/static")
     app.secret_key = 'your_secret_key'
 
     load_dotenv()
