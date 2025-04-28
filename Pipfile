@@ -5,11 +5,11 @@ name = "pypi"
 
 [packages]
 gunicorn = "*"
-pymongo = "*"
 dotenv = "*"
 flask = "*"
-pytest = "*"
 requests = "*"
+pymongo = "*"
+pytest = "*"
 
 [dev-packages]
 
