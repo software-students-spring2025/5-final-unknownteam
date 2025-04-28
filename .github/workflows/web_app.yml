@@ -13,6 +13,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    services:
+      mongo:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+
+    env:
+      MONGO_URI:    'mongodb://localhost:27017'
+      MONGO_DBNAME: 'country_wordle'
+
     timeout-minutes: 5
     strategy:
       matrix:
@@ -32,5 +43,4 @@ jobs:
 
       - name: Run pytest on all tests
         run: |
-          pipenv install pytest
           pipenv run pytest tests/test_web_app.py

@@ -17,8 +17,8 @@ def create_app():
     app.secret_key = 'your_secret_key'
 
     load_dotenv()
-    MONGO_URI = os.getenv('MONGO_URI')
-    MONGO_DBNAME = os.getenv('MONGO_DBNAME')
+    MONGO_URI    = os.getenv('MONGO_URI', 'mongodb://localhost:27017')
+    MONGO_DBNAME = os.getenv('MONGO_DBNAME', 'country_wordle')
 
     cxn = MongoClient(MONGO_URI)
     db = cxn[MONGO_DBNAME]
@@ -498,9 +498,8 @@ def create_app():
     
     return app
 
-app = create_app()
-
 if __name__ == "__main__":
+    app = create_app()
     FLASK_PORT = os.getenv("FLASK_PORT", "8080")
     FLASK_ENV = os.getenv("FLASK_ENV")
     print(f"FLASK_ENV: {FLASK_ENV}, FLASK_PORT: {FLASK_PORT}")
