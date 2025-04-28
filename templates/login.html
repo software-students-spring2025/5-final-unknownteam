@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        
+</head>
+<body>
+    <header class="header">
+        <h1 class="title">Country Guesser</h1>
+        <div class="header-buttons">
+            <button onclick="location.href='{{ url_for('home') }}'" class="header-button">Daily Country</button>
+            <button onclick="location.href='{{ url_for('practice') }}'" class="header-button">Practice</button>
+            <button onclick="location.href='{{ url_for('login') }}'" class="header-button">Login</button>
+        </div>
+    </header>
+    <form method="POST" action="{{ url_for('login') }}">
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="button">Login</button>
+    </form>
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <a href="{{ url_for('signup') }}">New user? Sign up here</a>
+</body>

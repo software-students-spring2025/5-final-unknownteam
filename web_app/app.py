@@ -6,7 +6,9 @@ import random
 from dotenv import load_dotenv
 from countries_data import COUNTRIES
 from bson.regex import Regex
+from bson.objectid import ObjectId
 import requests
+import flask_login
 
 START_DATE = datetime.date(2025, 4, 23)
 
@@ -24,11 +26,63 @@ def create_app():
     cxn = MongoClient(MONGO_URI)
     db = cxn[MONGO_DBNAME]
 
+    login_manager = flask_login.LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'login'
+
+    class User(flask_login.UserMixin):
+        def __init__(self, id, username):
+            self.id = id
+            self.username = username
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        if db is not None:
+            user_data = db.users.find_one({"_id": ObjectId(user_id)})
+            if user_data:
+                return User(user_id, user_data["username"])
+        return None
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            username = request.form["username"]
+            password = request.form["password"]
+            if db is not None:
+                user_data = db.users.find_one({"username": username})
+                if user_data and (user_data["password"] == password):
+                    user = User(id=str(user_data["_id"]), username=username)
+                    flask_login.login_user(user)
+                    return redirect(url_for('home'))
+                else:
+                    return render_template('login.html', error="Invalid credentials")
+        return render_template('login.html')
     try:
         cxn.admin.command("ping")
         print(" * Connected to MongoDB")
     except Exception as e:
         print(" * Error connecting to MongoDB", e)
+
+    @app.route("/signup", methods=["GET", "POST"])
+    def signup():
+        if request.method == "POST":
+            username = request.form["username"]
+            password = request.form["password"]
+            if db is not None:
+                existing_user = db.users.find_one({"username": username})
+                if existing_user:
+                    return render_template('signup.html', error="User already exists")
+                db.users.insert_one({"username": username, "password": password, "wins": 0})
+                user_data = db.users.find_one({"username": username})
+                user = User(id=str(user_data["_id"]), username=username)
+                flask_login.login_user(user)
+                return redirect(url_for('home'))
+        return render_template('signup.html')
+
+    @app.route("/logout", methods=["GET"])
+    def logout():
+        flask_login.logout_user()
+        return render_template('home.html', mode='daily',login = False)
 
     c_data = db["countries"]
     if c_data.count_documents({}) == 0:
@@ -59,8 +113,10 @@ def create_app():
         session['guesses'] = []
         session['mode'] = 'daily'
         #print('mode set to daily')
-
-        return render_template('home.html', mode='daily')
+        if(flask_login.current_user.is_authenticated):
+            return render_template('home.html', mode='daily',login=True)
+        else:
+            return render_template('home.html', mode='daily',login = False)
 
     @app.route('/guess', methods=['POST'])
     def guess():
@@ -379,6 +435,9 @@ def create_app():
         if all(f['status'] == 'rectangleRight' for f in feedback):
             game_over = True
             message = 'You Win! You have successfully guessed the country!'
+            if(flask_login.current_user.is_authenticated):
+                user = load_user(flask_login.current_user.get_id())
+                print(db.users.find_one({"username":user.username}))
         else:
             session['row'] = row + 1
             if session['row'] >= 6:
