@@ -21,7 +21,6 @@ def create_app():
         static_folder='static',    
         template_folder='templates' 
     )
-    
     app.secret_key = 'your_secret_key'
 
     load_dotenv()
@@ -125,7 +124,11 @@ def create_app():
 
     @app.route('/guess', methods=['POST'])
     def guess():
+        data = request.get_json()
+        if not data or 'guesses' not in data:
+            return jsonify({"error": "Missing guesses"}), 400
         return handle_guess(mode='daily')
+
 
     @app.route('/practice')
     def practice():
