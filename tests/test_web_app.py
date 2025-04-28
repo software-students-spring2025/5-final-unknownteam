@@ -2,7 +2,7 @@ import sys
 import os
 import pytest
 from unittest.mock import MagicMock, patch
-sys.path.append(os.path.abspath("./web-app"))
+sys.path.append(os.path.abspath("./web_app"))
 import app as app
 
 #  package for creating mock mongoDB databases
