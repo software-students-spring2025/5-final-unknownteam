@@ -16,11 +16,16 @@ app = Flask(__name__, template_folder="web_app/templates", static_folder="web_ap
 
 def create_app():
     
-    app = Flask(__name__, template_folder="web_app/templates", static_folder="web_app/static")
+    app = Flask(
+        __name__,
+        static_folder='static',    
+        template_folder='templates' 
+    )
+    
     app.secret_key = 'your_secret_key'
 
     load_dotenv()
-    MONGO_URI    = os.getenv('MONGO_URI', 'mongodb://localhost:27017')
+    MONGO_URI    = os.getenv('MONGO_URI', 'mongodb://mongodb:27017')
     MONGO_DBNAME = os.getenv('MONGO_DBNAME', 'country_wordle')
 
     cxn = MongoClient(MONGO_URI)
