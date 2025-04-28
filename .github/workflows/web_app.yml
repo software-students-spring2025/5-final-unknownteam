@@ -17,7 +17,8 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10"]
-
+    env:
+      ENVIRONMENT: secrets
     steps:
       - uses: actions/checkout@v4
 
@@ -33,4 +34,4 @@ jobs:
       - name: Run pytest on all tests
         run: |
           pipenv install pytest
-          pipenv run pytest tests/test_web_app.py
+          pipenv run pytest tests/test_app.py
