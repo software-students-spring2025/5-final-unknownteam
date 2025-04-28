@@ -8,6 +8,8 @@ gunicorn = "*"
 pymongo = "*"
 dotenv = "*"
 flask = "*"
+pytest = "*"
+requests = "*"
 
 [dev-packages]
 

@@ -3,8 +3,7 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch
 sys.path.append(os.path.abspath("./web-app"))
-import app
-import io
+import app as app
 
 #  package for creating mock mongoDB databases
 @pytest.fixture
@@ -26,3 +25,18 @@ def client():
     app.app.config["WTF_CSRF_ENABLED"] = False
     with app.app.test_client() as test_client:
         yield test_client
+
+@patch('app.requests.post')
+def test_upload(post):
+    post.return_value = MagicMock(status_code=200)
+    # Test with valid image file
+    response = post(
+        "/upload",
+        data={
+            "entry": 'Afghanistan'
+        },
+        content_type="multipart/form-data",
+        follow_redirects=True
+    )
+    assert response.status_code == 200
+    assert post.called

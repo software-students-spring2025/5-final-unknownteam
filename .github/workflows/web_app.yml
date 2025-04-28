@@ -32,9 +32,9 @@ jobs:
           pip install pytest pymongo dotenv
 
       - name: Run Pytest
-        working-directory: ./web-app
+        working-directory: ./web_app
         env:
           MONGO_DBNAME: ${{ secrets.MONGO_DBNAME }}
           MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
-          python -m pytest
+          python3 -m pytest

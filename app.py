@@ -4,8 +4,9 @@ from pymongo import MongoClient
 import os
 import random
 from dotenv import load_dotenv
-from countries_data import COUNTRIES
+from web_app.countries_data import COUNTRIES
 from bson.regex import Regex
+import requests
 
 START_DATE = datetime.date(2025, 4, 23)
 
