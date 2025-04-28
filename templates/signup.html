@@ -15,19 +15,25 @@
             <button onclick="location.href='{{ url_for('login') }}'" class="header-button">Login</button>
         </div>
     </header>
-    <form method="POST" action="{{ url_for('signup') }}">
-        <div>
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
-        </div>
-        <div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <button type="submit" class="button">Sign Up</button>
-    </form>
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
-    <a href="{{ url_for('login') }}">Already have an account? Login here</a>
+    <div class="login-container">
+        <form method="POST" action="{{ url_for('signup') }}" class="login-form">
+            <h2>Sign Up</h2>
+            {% if error %}
+            <p class="error-message">{{ error }}</p>
+            {% endif %}
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="action-button">Sign Up</button>
+            <p class="signup-link">
+                <a href="{{ url_for('login') }}">Already have an account? Login here</a>
+            </p>
+        </form>
+    </div>
+    
 </body>
