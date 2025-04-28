@@ -14,7 +14,7 @@ def test_homepage(client):
     """Test that homepage loads correctly"""
     response = client.get('/')
     assert response.status_code == 200
-    assert b"Country Guesser" in response.data
+    assert b"Country Wordle" in response.data
 
 def test_practice_page(client):
     """Test that practice page loads correctly"""
