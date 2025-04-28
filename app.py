@@ -15,7 +15,6 @@ app = Flask(__name__)
 def create_app():
     app = Flask(__name__)
     app.secret_key = 'your_secret_key'
-
     load_dotenv()
     MONGO_URI = os.getenv('MONGO_URI')
     MONGO_DBNAME = os.getenv('MONGO_DBNAME')
