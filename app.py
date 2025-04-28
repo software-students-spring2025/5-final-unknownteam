@@ -51,9 +51,7 @@ def create_app():
                 user_data = db.users.find_one({"username": username})
                 if user_data and (user_data["password"] == password):
                     user = User(id=str(user_data["_id"]), username=username)
-                    print(user)
                     flask_login.login_user(user)
-                    print(flask_login.current_user.is_authenticated)
                     return redirect(url_for('home'))
                 else:
                     return render_template('login.html', error="Invalid credentials")
@@ -73,7 +71,7 @@ def create_app():
                 existing_user = db.users.find_one({"username": username})
                 if existing_user:
                     return render_template('signup.html', error="User already exists")
-                db.users.insert_one({"username": username, "password": password})
+                db.users.insert_one({"username": username, "password": password, "wins": 0})
                 user_data = db.users.find_one({"username": username})
                 user = User(id=str(user_data["_id"]), username=username)
                 flask_login.login_user(user)
@@ -426,6 +424,9 @@ def create_app():
         if all(f['status'] == 'rectangleRight' for f in feedback):
             game_over = True
             message = 'You Win! You have successfully guessed the country!'
+            if(flask_login.current_user.is_authenticated):
+                user = load_user(flask_login.current_user.get_id())
+                print(db.users.find_one({"username":user.username}))
         else:
             session['row'] = row + 1
             if session['row'] >= 6:
