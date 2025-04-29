@@ -16,11 +16,15 @@ app = Flask(__name__, template_folder="web_app/templates", static_folder="web_ap
 
 def create_app():
     
-    app = Flask(__name__, template_folder="web_app/templates", static_folder="web_app/static")
+    app = Flask(
+         __name__,
+         static_folder='static',    
+         template_folder='templates' 
+     )
     app.secret_key = 'your_secret_key'
 
     load_dotenv()
-    MONGO_URI    = os.getenv('MONGO_URI', 'mongodb://localhost:27017')
+    MONGO_URI = os.getenv('MONGO_URI', 'mongodb://mongodb:27017')
     MONGO_DBNAME = os.getenv('MONGO_DBNAME', 'country_wordle')
 
     cxn = MongoClient(MONGO_URI)
@@ -114,7 +118,9 @@ def create_app():
         session['mode'] = 'daily'
         #print('mode set to daily')
         if(flask_login.current_user.is_authenticated):
-            return render_template('home.html', mode='daily',login=True)
+            user = load_user(flask_login.current_user.get_id())
+            num = db.users.find_one({"username":user.username})["wins"] 
+            return render_template('home.html', mode='daily',login=True, nWins = num)
         else:
             return render_template('home.html', mode='daily',login = False)
 
@@ -133,7 +139,12 @@ def create_app():
         session['practice_filters'] = {}
         session['guessed_countries'] = []
         #print(session)
-        return render_template('practice.html')
+        if(flask_login.current_user.is_authenticated):
+            user = load_user(flask_login.current_user.get_id())
+            num = db.users.find_one({"username":user.username})["wins"] 
+            return render_template('practice.html', mode='daily',login=True, nWins = num)
+        else:
+            return render_template('practice.html', mode='daily',login = False)
 
     @app.route('/get_practice_filters', methods=['GET'])
     def get_practice_filters():
@@ -288,8 +299,12 @@ def create_app():
         }
 
         session['practice_guesses'] = []
-
-        return render_template('home.html', mode='practice', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False))
+        if(flask_login.current_user.is_authenticated):
+            user = load_user(flask_login.current_user.get_id())
+            num = db.users.find_one({"username":user.username})["wins"] 
+            return render_template('home.html', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login=True, nWins = num)
+        else:
+            return render_template('home.html', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login = False)
 
     @app.route('/practice_guess', methods=['POST'])
     def practice_guess():
@@ -437,7 +452,8 @@ def create_app():
             message = 'You Win! You have successfully guessed the country!'
             if(flask_login.current_user.is_authenticated):
                 user = load_user(flask_login.current_user.get_id())
-                print(db.users.find_one({"username":user.username}))
+                num = db.users.find_one({"username":user.username})["wins"] + 1
+                db.users.update_one({"username":user.username},{"$set":{"wins":num}})
         else:
             session['row'] = row + 1
             if session['row'] >= 6:
