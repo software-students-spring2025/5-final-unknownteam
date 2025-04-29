@@ -11,6 +11,7 @@ flask = "*"
 pytest = "*"
 requests = "*"
 flask-login = "*"
+docker = "*"
 
 [dev-packages]
 

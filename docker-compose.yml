@@ -10,7 +10,7 @@ services:
       - app-network
     volumes:
       - ./.env:/app/.env  # Share .env file with the app container
-    command: python -u app.py  # Command to run the web app
+    command: gunicorn --timeout 60 --workers 4 --bind 0.0.0.0:8080 'app:create_app()'
 
   # MongoDB Service
   mongodb:
