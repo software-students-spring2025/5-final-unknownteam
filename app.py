@@ -120,7 +120,7 @@ def create_app():
             return "No countries in database."
         if today_country:
             today_country['_id'] = str(today_country['_id'])
-        
+        session['gameover']=False
         session['target'] = today_country
         session['mode'] = 'daily'
         session['row']=0
@@ -130,9 +130,9 @@ def create_app():
         if flask_login.current_user.is_authenticated:
             user = load_user(flask_login.current_user.get_id())
             num = db.users.find_one({"username": user.username})["wins"]
-            return render_template('home.html', mode='daily', login=True, nWins=num, guesses=session['guesses'])
+            return render_template('home.html', mode='daily', login=True, nWins=num, guesses=session['guesses'], gameover=session['gameover'])
         else:
-            return render_template('home.html', mode='daily', login=False, guesses=session['guesses'])
+            return render_template('home.html', mode='daily', login=False, guesses=session['guesses'], gameover=session['gameover'])
 
 
     @app.route('/guess', methods=['POST'])
@@ -146,6 +146,7 @@ def create_app():
     @app.route('/practice')
     def practice():
         #print(session)
+        session['gameover']=False
         session['practice_row'] = 0
         session['row']=0
         session['guesses']=0
@@ -172,6 +173,7 @@ def create_app():
     def start_practice():
         filters = request.get_json()
         session['practice_filters'] = filters
+        session['gameover']=False
         query = {}
         session['hint_enabled'] = filters.get('hints', False) if filters else False
         #print(filters)
@@ -245,6 +247,7 @@ def create_app():
 
     @app.route('/practice_game')
     def practice_game():
+        session['gameover']=False
         session['row'] = 0
         query = {}
         session['guessed_countries'] = []
@@ -317,9 +320,9 @@ def create_app():
         if(flask_login.current_user.is_authenticated):
             user = load_user(flask_login.current_user.get_id())
             num = db.users.find_one({"username":user.username})["wins"] 
-            return render_template('home.html', mode='practice', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login=True, nWins = num)
+            return render_template('home.html', mode='practice', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login=True, nWins = num, gameover=session['gameover'])
         else:
-            return render_template('home.html', mode='practice', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login = False)
+            return render_template('home.html', mode='practice', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login = False, gameover=session['gameover'])
 
     @app.route('/practice_guess', methods=['POST'])
     def practice_guess():
@@ -378,117 +381,147 @@ def create_app():
         if all(f['status'] == 'rectangleRight' for f in feedback):
             game_over = True
             message = 'You Win (Practice Mode)!'
+            session['gameover']=True
         else:
             session['practice_row'] = row + 1
             if session['practice_row'] >= 6:
                 game_over = True
                 message = f"You Lose! The country was {target['name']}."
+                session['gameover']=True
 
         return jsonify({
             'feedback': feedback,
             'row': row,
             'game_over': game_over,
+            'gameover': session['gameover'],
             'message': message
         })
 
     def handle_guess(mode):
-        #print(f"Session at start of guess: {session}") 
-        mode = session.get('mode', 'daily')
-        #print(f"Mode at guess handling: {mode}")
-        if mode == 'practice':
-            target = session.get('practice_target')
-        else:
-            target = session.get('target')
-        data = request.json['guesses']
-        row = session.get('row', 0)
-
-        guess_value = data[0]
-
-        query = {'name': {'$regex': f'^{guess_value}$', '$options': 'i'}}
-
-        if mode == 'practice' and session.get('practice_countries'):
-            query = {
-                'name': {'$in': session['practice_countries']},
-                '$and': [
-                    {'name': {'$regex': f'^{guess_value}$', '$options': 'i'}}
-                ]
-            }
-
-        guessed_country = c_data.find_one(query)
-
-        if not guessed_country:
-            return jsonify({'error': 'Country not found'}), 400
-
-        guessed_countries = session.get('guessed_countries', [])
-        if guessed_country['name'] not in guessed_countries:
-            guessed_countries.append(guessed_country['name'])
-            session['guessed_countries'] = guessed_countries
-
-        fields = ['name', 'continent', 'population', 'area_km2', 'gdp_per_capita_usd', 'languages', 'landlocked']
-        feedback = []
-
-        for field in fields:
-            correct_value = target[field]
-            guessed_value = guessed_country[field]
-
-            status = 'rectangleWrong'
-            arrow = None
-
-            if field in ['population', 'area_km2', 'gdp_per_capita_usd']:
-                try:
-                    guess_num = float(guessed_value)
-                    correct_num = float(correct_value)
-
-                    if guess_num == correct_num:
-                        status = 'rectangleRight'
-                    elif guess_num < correct_num:
-                        arrow = 'triangle-up'
-                    else:
-                        arrow = 'triangle-down'
-                except ValueError:
-                    pass
-                display_value = '{:,}'.format(guessed_value) if field != 'gdp_per_capita_usd' else '{:,.2f}'.format(guessed_value)
-
+            mode = session.get('mode', 'daily')
+            #print(f"Mode at guess handling: {mode}")
+            if mode == 'practice':
+                target = session.get('practice_target')
             else:
-                if str(guessed_value).strip().lower() == str(correct_value).strip().lower():
-                    status = 'rectangleRight'
-                display_value = str(guessed_value)
+                target = session.get('target')
+            data = request.json['guesses']
+            row = session.get('row', 0)
 
-            feedback.append({
-                'value': display_value,
-                'status': status,
-                'arrow': arrow
-            })
+            guess_value = data[0]
 
-        game_over = False
-        message = ''
-        if all(f['status'] == 'rectangleRight' for f in feedback):
-            game_over = True
-            message = 'You Win! You have successfully guessed the country!'
-            if(flask_login.current_user.is_authenticated) and mode == 'daily':
-                user = load_user(flask_login.current_user.get_id())
-                num = db.users.find_one({"username":user.username})["wins"] + 1
-                db.users.update_one({"username":user.username},{"$set":{"wins":num}})
+            query = {'name': {'$regex': f'^{guess_value}$', '$options': 'i'}}
+
+            if mode == 'practice' and session.get('practice_countries'):
+                query = {
+                    'name': {'$in': session['practice_countries']},
+                    '$and': [
+                        {'name': {'$regex': f'^{guess_value}$', '$options': 'i'}}
+                    ]
+                }
+
+            guessed_country = c_data.find_one(query)
+
+            if not guessed_country:
+                return jsonify({'error': 'Country not found'}), 400
+
+            guessed_countries = session.get('guessed_countries', [])
+            if guessed_country['name'] not in guessed_countries:
+                guessed_countries.append(guessed_country['name'])
+                session['guessed_countries'] = guessed_countries
+
+            fields = ['name', 'continent', 'population', 'area_km2', 'gdp_per_capita_usd', 'languages', 'landlocked']
+            feedback = []
+
+            for field in fields:
+                correct_value = target[field]
+                guessed_value = guessed_country[field]
+
+                status = 'rectangleWrong'
+                arrow = None
+
+                if field in ['population', 'area_km2', 'gdp_per_capita_usd']:
+                    try:
+                        guess_num = float(guessed_value)
+                        correct_num = float(correct_value)
+
+                        if guess_num == correct_num:
+                            status = 'rectangleRight'
+                        elif guess_num < correct_num:
+                            arrow = 'triangle-up'
+                        else:
+                            arrow = 'triangle-down'
+                    except ValueError:
+                        pass
+                    display_value = '{:,}'.format(guessed_value) if field != 'gdp_per_capita_usd' else '{:,.2f}'.format(guessed_value)
+
+                else:
+                    if str(guessed_value).strip().lower() == str(correct_value).strip().lower():
+                        status = 'rectangleRight'
+                    display_value = str(guessed_value)
+
+                feedback.append({
+                    'value': display_value,
+                    'status': status,
+                    'arrow': arrow
+                })
+
+            game_over = False
+            message = ''
+            if all(f['status'] == 'rectangleRight' for f in feedback):
+                game_over = True
+                message = 'You Win! You have successfully guessed the country!'
+                session['gameover']=True
+                if(flask_login.current_user.is_authenticated) and mode == 'daily':
+                    user = load_user(flask_login.current_user.get_id())
+                    num = db.users.find_one({"username":user.username})["wins"] + 1
+                    db.users.update_one({"username":user.username},{"$set":{"wins":num}})
+                    print(num)
+                    return jsonify({
+                        'feedback': feedback,
+                        'row': row,
+                        'game_over': game_over,
+                        'gameover': session['gameover'],
+                        'message': message,
+                        'target': target,
+                        'Nwins': num
+                    })
+                if(flask_login.current_user.is_authenticated):
+                    user = load_user(flask_login.current_user.get_id())
+                    num = db.users.find_one({"username":user.username})["wins"]
+                    db.users.update_one({"username":user.username},{"$set":{"wins":num}})
+                    return jsonify({
+                        'feedback': feedback,
+                        'row': row,
+                        'game_over': game_over,
+                        'gameover': session['gameover'],
+                        'message': message,
+                        'target': target,
+                        'Nwins': num
+                    })
+                else:
+                    return jsonify({
+                        'feedback': feedback,
+                        'row': row,
+                        'game_over': game_over,
+                        'gameover': session['gameover'],
+                        'message': message,
+                        'target': target,
+                    })
+            else:
+                session['row'] = row + 1
+                if session['row'] >= 6:
+                    session['gameover']=True
+                    game_over = True
+                    message = f"You Lose! The country was {target['name']}."
                 return jsonify({
                     'feedback': feedback,
                     'row': row,
                     'game_over': game_over,
+                    'gameover': session['gameover'],
                     'message': message,
                     'target': target,
-                    'wins': num
                 })
-        else:
-            session['row'] = row + 1
-            if session['row'] >= 6:
-                game_over = True
-                message = f"You Lose! The country was {target['name']}."
-        return jsonify({
-            'feedback': feedback,
-            'row': row,
-            'game_over': game_over,
-            'message': message,
-            'target': target
-        })
+            
     
     @app.route('/get_possible_countries', methods=['GET'])
     def get_possible_countries():
