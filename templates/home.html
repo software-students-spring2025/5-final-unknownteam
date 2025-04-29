@@ -5,7 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script>
-        const gameMode = "{{ mode }}"
+        const gameMode = "{{ mode }}";
+        const previousGuesses = {{ guesses | default([]) | tojson }};
+
+        // If in daily mode and user is logged in, don't reset the rows
+        if (gameMode === "daily" && previousGuesses.length > 0) {
+            // Render previous guesses on the board
+            previousGuesses.forEach((guess, rowIndex) => {
+                // Assuming updateBoard is the function that updates the visual board
+                updateBoard(guess.feedback, rowIndex);
+            });
+        }
 
         async function submitGuess() {
             const guessData = [];
@@ -35,13 +45,22 @@
 
             if (result.game_over) {
                 if (result.message.includes("You Win")) {
-                    showWinModal();  // Show win modal
+                    showWinModal();
+                    updateWins(result.wins);
                 } else if (result.message.includes("You Lose")) {
-                    showLossModal(result.target.name);  // Show loss modal with country name
+                    showLossModal(result.target.name);
                 }
                 document.getElementById('guess-button').disabled = true;
             }
+
+            // For daily mode, save the guess to the session without resetting it
+            if (gameMode === "daily") {
+                const updatedGuesses = [...previousGuesses, { guess: input, feedback: result.feedback }];
+                sessionStorage.setItem('guesses', JSON.stringify(updatedGuesses));
+            }
         }
+    </script>
+    <script>
 
 
         function updateBoard(feedback, row) {
@@ -62,6 +81,14 @@
             });
         }
     </script>  
+    <script>
+        function updateWins(wins) {
+            const winsDiv = document.getElementById('numVal');
+            winsDiv.textContent = `Number of Wins: ${wins}`;
+        }
+
+
+    </script>
     <script>
         document.getElementById('back-to-selection').addEventListener('click', function() {
             // Reset session storage when going back to selection
@@ -240,7 +267,6 @@
             }
         }
         </script>
-  
     
 </head>
 <body>
@@ -253,7 +279,7 @@
             <button onclick="location.href='{{ url_for('login') }}'" class="header-button">Login</button>
             {% endif %}
             {%if login == True%}
-            <div class="numVal">Number of Wins: {{nWins}}</div>
+            <div id="numVal" class="numVal">Number of Wins: {{nWins}}</div>
             <button onclick="location.href='{{ url_for('logout') }}'" class="header-button">Log Out</button>
             {% endif %}
         </div>

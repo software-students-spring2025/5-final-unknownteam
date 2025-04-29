@@ -124,20 +124,22 @@ def create_app():
         today_country = get_today_country()
         if today_country is None:
             return "No countries in database."
-
         if today_country:
             today_country['_id'] = str(today_country['_id'])
+        
         session['target'] = today_country
-        session['row'] = 0
-        session['guesses'] = []
         session['mode'] = 'daily'
-        #print('mode set to daily')
-        if(flask_login.current_user.is_authenticated):
+
+        # Ensure guesses are retained for the day in session
+        if 'guesses' not in session:
+            session['guesses'] = []  # Initialize guesses if not present
+        if flask_login.current_user.is_authenticated:
             user = load_user(flask_login.current_user.get_id())
-            num = db.users.find_one({"username":user.username})["wins"] 
-            return render_template('home.html', mode='daily',login=True, nWins = num)
+            num = db.users.find_one({"username": user.username})["wins"]
+            return render_template('home.html', mode='daily', login=True, nWins=num, guesses=session['guesses'])
         else:
-            return render_template('home.html', mode='daily',login = False)
+            return render_template('home.html', mode='daily', login=False, guesses=session['guesses'])
+
 
     @app.route('/guess', methods=['POST'])
     def guess():
@@ -161,9 +163,9 @@ def create_app():
         if(flask_login.current_user.is_authenticated):
             user = load_user(flask_login.current_user.get_id())
             num = db.users.find_one({"username":user.username})["wins"] 
-            return render_template('practice.html', mode='daily',login=True, nWins = num)
+            return render_template('practice.html',login=True, nWins = num)
         else:
-            return render_template('practice.html', mode='daily',login = False)
+            return render_template('practice.html',login = False)
 
     @app.route('/get_practice_filters', methods=['GET'])
     def get_practice_filters():
@@ -321,9 +323,9 @@ def create_app():
         if(flask_login.current_user.is_authenticated):
             user = load_user(flask_login.current_user.get_id())
             num = db.users.find_one({"username":user.username})["wins"] 
-            return render_template('home.html', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login=True, nWins = num)
+            return render_template('home.html', mode='practice', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login=True, nWins = num)
         else:
-            return render_template('home.html', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login = False)
+            return render_template('home.html', mode='practice', target=session.get('practice_target'), hint_enabled=session.get('hint_enabled', False),login = False)
 
     @app.route('/practice_guess', methods=['POST'])
     def practice_guess():
@@ -464,12 +466,14 @@ def create_app():
                 'arrow': arrow
             })
 
+        user = load_user(flask_login.current_user.get_id())
+        num = db.users.find_one({"username":user.username})["wins"]
         game_over = False
         message = ''
         if all(f['status'] == 'rectangleRight' for f in feedback):
             game_over = True
             message = 'You Win! You have successfully guessed the country!'
-            if(flask_login.current_user.is_authenticated):
+            if(flask_login.current_user.is_authenticated) and mode == 'daily':
                 user = load_user(flask_login.current_user.get_id())
                 num = db.users.find_one({"username":user.username})["wins"] + 1
                 db.users.update_one({"username":user.username},{"$set":{"wins":num}})
@@ -484,7 +488,8 @@ def create_app():
             'row': row,
             'game_over': game_over,
             'message': message,
-            'target': target
+            'target': target,
+            'wins': num
         })
     
     @app.route('/get_possible_countries', methods=['GET'])
@@ -572,7 +577,6 @@ def create_app():
             country['_id'] = str(country['_id'])
 
         return jsonify({'countries': possible_countries})
-
 
     @app.route('/autocomplete', methods=['GET'])
     def autocomplete():
