@@ -137,6 +137,6 @@ def test_login(client):
         "username": ["ExampleUser"],
         "password": ["Password"]
     }
-    response = client.post('/signup',json = payload,follow_redirects = False)
+    response = client.post('/login',json = payload,follow_redirects = False)
     assert response.status_code == 302
     assert response.headers['Location'].endswith('/')
