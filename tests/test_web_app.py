@@ -120,3 +120,23 @@ def test_homepage_contains_input(client):
     response = client.get('/')
     assert response.status_code == 200
     assert b'<input' in response.data
+
+def test_signup(client):
+    """Tests signup functionality"""
+    payload = {
+        "username": ["ExampleUser"],
+        "password": ["Password"],
+        "wins": [0]
+    }
+    response = client.post('/signup',json = payload)
+    assert response.status_code == 200
+
+def test_login(client):
+    """Tests login functionality"""
+    payload = {
+        "username": ["ExampleUser"],
+        "password": ["Password"]
+    }
+    response = client.post('/signup',json = payload,follow_redirects = False)
+    assert response.status_code == 302
+    assert response.headers['Location'].endswith('/')
