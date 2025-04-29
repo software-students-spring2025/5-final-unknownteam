@@ -628,15 +628,9 @@ def create_app():
     
     return app
 
-def runApp():
-    app = create_app()
-    FLASK_PORT = os.getenv("FLASK_PORT", "8080")
-    app.run(debug=False, host="0.0.0.0", port=int(FLASK_PORT))
-"""
 if __name__ == "__main__":
     app = create_app()
     FLASK_PORT = os.getenv("FLASK_PORT", "8080")
     FLASK_ENV = os.getenv("FLASK_ENV")
     print(f"FLASK_ENV: {FLASK_ENV}, FLASK_PORT: {FLASK_PORT}")
     app.run(debug=False, host="0.0.0.0", port=int(FLASK_PORT))
-"""
