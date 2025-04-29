@@ -120,3 +120,14 @@ def test_homepage_contains_input(client):
     response = client.get('/')
     assert response.status_code == 200
     assert b'<input' in response.data
+
+def test_signup(client):
+    """Tests signup functionality"""
+    payload = {
+        "username": ["ExampleUser"],
+        "password": ["Password"],
+        "wins": [0]
+    }
+    response = client.post('/signup',json = payload)
+    assert response.status_code == 200 or response.status_code == 302
+
