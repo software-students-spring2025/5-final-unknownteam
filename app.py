@@ -12,7 +12,7 @@ import flask_login
 
 START_DATE = datetime.date(2025, 4, 23)
 
-app = Flask(__name__, template_folder="web_app/templates", static_folder="web_app/static")
+#app = Flask(__name__, template_folder="web_app/templates", static_folder="web_app/static")
 
 def create_app():
     
@@ -21,11 +21,6 @@ def create_app():
         static_folder='static',    
         template_folder='templates' 
     )
-    app = Flask(
-         __name__,
-         static_folder='static',    
-         template_folder='templates' 
-     )
     app.secret_key = 'your_secret_key'
 
     load_dotenv()
@@ -38,7 +33,6 @@ def create_app():
     login_manager = flask_login.LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = 'login'
-
     class User(flask_login.UserMixin):
         def __init__(self, id, username):
             self.id = id
