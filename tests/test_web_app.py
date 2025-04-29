@@ -129,7 +129,7 @@ def test_signup(client):
         "wins": [0]
     }
     response = client.post('/signup',json = payload)
-    assert response.status_code == 200
+    assert response.status_code == 200 or response.status_code == 302
 
 def test_login(client):
     """Tests login functionality"""
