@@ -32,13 +32,18 @@
             sessionStorage.setItem('practice_row', parseInt(currentRow) + 1);
 
             if (result.game_over) {
+                const guessSection = document.querySelector('.guess-section');
+                if (guessSection) {
+                    guessSection.remove();
+                }
                 if (result.message.includes("You Win")) {
                     showWinModal();
-                    updateWins(result.wins);
+                    updateWins(result.Nwins);
                 } else if (result.message.includes("You Lose")) {
                     showLossModal(result.target.name);
                 }
-                document.getElementById('guess-button').disabled = true;
+                //document.getElementById('guess-button').disabled = true;
+
             }
         }
     </script>
@@ -307,12 +312,10 @@
         </li>
         {% endfor %}
     </ul>
-
     <div class="guess-section">
         <input type="text" id="country-guess" class="guess-input" placeholder="Enter country guess" autocomplete="off">
         <button id="guess-button" onclick="submitGuess()">Guess</button>
     </div>
-    
     <!-- ADD 4 lines of empty space here -->
     <div style="height: 80px;"></div>  
     
