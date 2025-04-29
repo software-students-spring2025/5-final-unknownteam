@@ -161,7 +161,9 @@ def create_app():
         session['guessed_countries'] = []
         #print(session)
         if(flask_login.current_user.is_authenticated):
-            return render_template('practice.html',login=True)
+            user = load_user(flask_login.current_user.get_id())
+            num = db.users.find_one({"username":user.username})["wins"] 
+            return render_template('practice.html',login=True, nWins=num)
         else:
             return render_template('practice.html',login = False)
 
