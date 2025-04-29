@@ -129,10 +129,10 @@ def create_app():
         
         session['target'] = today_country
         session['mode'] = 'daily'
+        session['row']=0
+        session['guesses']=[]
 
         # Ensure guesses are retained for the day in session
-        if 'guesses' not in session:
-            session['guesses'] = []  # Initialize guesses if not present
         if flask_login.current_user.is_authenticated:
             user = load_user(flask_login.current_user.get_id())
             num = db.users.find_one({"username": user.username})["wins"]
@@ -161,9 +161,7 @@ def create_app():
         session['guessed_countries'] = []
         #print(session)
         if(flask_login.current_user.is_authenticated):
-            user = load_user(flask_login.current_user.get_id())
-            num = db.users.find_one({"username":user.username})["wins"] 
-            return render_template('practice.html',login=True, nWins = num)
+            return render_template('practice.html',login=True)
         else:
             return render_template('practice.html',login = False)
 
@@ -466,8 +464,6 @@ def create_app():
                 'arrow': arrow
             })
 
-        user = load_user(flask_login.current_user.get_id())
-        num = db.users.find_one({"username":user.username})["wins"]
         game_over = False
         message = ''
         if all(f['status'] == 'rectangleRight' for f in feedback):
@@ -477,19 +473,25 @@ def create_app():
                 user = load_user(flask_login.current_user.get_id())
                 num = db.users.find_one({"username":user.username})["wins"] + 1
                 db.users.update_one({"username":user.username},{"$set":{"wins":num}})
+                return jsonify({
+                    'feedback': feedback,
+                    'row': row,
+                    'game_over': game_over,
+                    'message': message,
+                    'target': target,
+                    'wins': num
+                })
         else:
             session['row'] = row + 1
             if session['row'] >= 6:
                 game_over = True
                 message = f"You Lose! The country was {target['name']}."
-
         return jsonify({
             'feedback': feedback,
             'row': row,
             'game_over': game_over,
             'message': message,
-            'target': target,
-            'wins': num
+            'target': target
         })
     
     @app.route('/get_possible_countries', methods=['GET'])
