@@ -14,7 +14,6 @@ START_DATE = datetime.date(2025, 4, 23)
 
 #app = Flask(__name__, template_folder="web_app/templates", static_folder="web_app/static")
 
-
 def create_app():
     
     app = Flask(
@@ -629,8 +628,11 @@ def create_app():
     
     return app
 
-app = create_app()
-
+def runApp():
+    app = create_app()
+    FLASK_PORT = os.getenv("FLASK_PORT", "8080")
+    app.run(debug=False, host="0.0.0.0", port=int(FLASK_PORT))
+    return app
 """
 if __name__ == "__main__":
     app = create_app()
