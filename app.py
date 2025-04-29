@@ -17,6 +17,11 @@ app = Flask(__name__, template_folder="web_app/templates", static_folder="web_ap
 def create_app():
     
     app = Flask(
+        __name__,
+        static_folder='static',    
+        template_folder='templates' 
+    )
+    app = Flask(
          __name__,
          static_folder='static',    
          template_folder='templates' 
@@ -24,7 +29,7 @@ def create_app():
     app.secret_key = 'your_secret_key'
 
     load_dotenv()
-    MONGO_URI = os.getenv('MONGO_URI', 'mongodb://mongodb:27017')
+    MONGO_URI    = os.getenv('MONGO_URI', 'mongodb://mongodb:27017')
     MONGO_DBNAME = os.getenv('MONGO_DBNAME', 'country_wordle')
 
     cxn = MongoClient(MONGO_URI)
@@ -47,46 +52,56 @@ def create_app():
                 return User(user_id, user_data["username"])
         return None
 
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        if request.method == "POST":
-            username = request.form["username"]
-            password = request.form["password"]
-            if db is not None:
-                user_data = db.users.find_one({"username": username})
-                if user_data and (user_data["password"] == password):
-                    user = User(id=str(user_data["_id"]), username=username)
-                    flask_login.login_user(user)
-                    return redirect(url_for('home'))
-                else:
-                    return render_template('login.html', error="Invalid credentials")
-        return render_template('login.html')
-    try:
-        cxn.admin.command("ping")
-        print(" * Connected to MongoDB")
-    except Exception as e:
-        print(" * Error connecting to MongoDB", e)
-
     @app.route("/signup", methods=["GET", "POST"])
     def signup():
         if request.method == "POST":
-            username = request.form["username"]
-            password = request.form["password"]
-            if db is not None:
-                existing_user = db.users.find_one({"username": username})
-                if existing_user:
-                    return render_template('signup.html', error="User already exists")
-                db.users.insert_one({"username": username, "password": password, "wins": 0})
-                user_data = db.users.find_one({"username": username})
+            username = request.form.get("username")
+            password = request.form.get("password")
+
+            if not username or not password:
+                return render_template('signup.html', error="Please fill out both fields.")
+
+            existing_user = db.users.find_one({"username": username})
+            if existing_user:
+                return render_template('signup.html', error="User already exists. Please log in instead.")
+
+            # Insert the new user into the database
+            result = db.users.insert_one({
+                "username": username,
+                "password": password,
+                "wins": 0  # Initializing other fields if necessary
+            })
+
+            user = User(id=str(result.inserted_id), username=username)
+            flask_login.login_user(user)
+            return redirect(url_for('home'))
+
+        return render_template('signup.html')
+
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            username = request.form.get("username")
+            password = request.form.get("password")
+
+            user_data = db.users.find_one({"username": username})
+
+            if user_data and user_data["password"] == password:
                 user = User(id=str(user_data["_id"]), username=username)
                 flask_login.login_user(user)
                 return redirect(url_for('home'))
-        return render_template('signup.html')
+            else:
+                return render_template('login.html', error="Invalid username or password.")
 
-    @app.route("/logout", methods=["GET"])
+        return render_template('login.html')
+
+
+    @app.route("/logout")
+    @flask_login.login_required
     def logout():
         flask_login.logout_user()
-        return render_template('home.html', mode='daily',login = False)
+        return redirect(url_for('home'))
 
     c_data = db["countries"]
     if c_data.count_documents({}) == 0:
@@ -126,7 +141,11 @@ def create_app():
 
     @app.route('/guess', methods=['POST'])
     def guess():
+        data = request.get_json()
+        if not data or 'guesses' not in data:
+            return jsonify({"error": "Missing guesses"}), 400
         return handle_guess(mode='daily')
+
 
     @app.route('/practice')
     def practice():

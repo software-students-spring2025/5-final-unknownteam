@@ -245,7 +245,7 @@
 </head>
 <body>
     <header class="header">
-        <h1 class="title">Country Guesser</h1>
+        <h1 class="title">Country Wordle</h1>
         <div class="header-buttons">
             <button onclick="location.href='{{ url_for('home') }}'" class="header-button">Daily Country</button>
             <button onclick="location.href='{{ url_for('practice') }}'" class="header-button">Practice</button>
@@ -259,11 +259,7 @@
         </div>
     </header>
 
-    <div class="guess-section">
-        <input type="text" id="country-guess" class="guess-input" placeholder="Enter country guess" autocomplete="off">
-        <button id="guess-button" onclick="submitGuess()">Guess</button>
-    </div>
-
+    
     <div id="win-modal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -303,6 +299,16 @@
         </li>
         {% endfor %}
     </ul>
+
+    <div class="guess-section">
+        <input type="text" id="country-guess" class="guess-input" placeholder="Enter country guess" autocomplete="off">
+        <button id="guess-button" onclick="submitGuess()">Guess</button>
+    </div>
+    
+    <!-- ADD 4 lines of empty space here -->
+    <div style="height: 80px;"></div>  
+    
+    
     {% if mode == 'practice' %}
     <div id="bottom-buttons" class="button-container">
         <button id="generate-new-country" class="action-button" onclick="window.location.reload()">Generate New Country</button>
