@@ -253,6 +253,7 @@
             <button onclick="location.href='{{ url_for('login') }}'" class="header-button">Login</button>
             {% endif %}
             {%if login == True%}
+            <div class="numVal">Number of Wins: {{nWins}}</div>
             <button onclick="location.href='{{ url_for('logout') }}'" class="header-button">Log Out</button>
             {% endif %}
         </div>
