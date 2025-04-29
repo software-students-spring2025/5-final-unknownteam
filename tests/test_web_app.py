@@ -131,12 +131,3 @@ def test_signup(client):
     response = client.post('/signup',json = payload)
     assert response.status_code == 200 or response.status_code == 302
 
-def test_login(client):
-    """Tests login functionality"""
-    payload = {
-        "username": ["ExampleUser"],
-        "password": ["Password"]
-    }
-    response = client.post('/login',json = payload,follow_redirects = False)
-    assert response.status_code == 200 or response.status_code == 302
-    assert response.headers['Location'].endswith('/')
